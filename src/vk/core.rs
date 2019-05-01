@@ -45,9 +45,9 @@ fn create_device( instance: &Arc<Instance> ) -> ( Arc<Device>, Arc<Queue> ) {
         .expect("out-of-range GPU index");
 
     //  query queue families on this physical device
-    for family in physical_device.queue_families() {
-        println!("Found a queue family with {:?} queue(s)", family.queues_count());
-    }
+    // for family in physical_device.queue_families() {
+    //     println!("Found a queue family with {:?} queue(s)", family.queues_count());
+    // }
 
     let queue_family = physical_device.queue_families()
         .find(|&q| q.supports_graphics())
