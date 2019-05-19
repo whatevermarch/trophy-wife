@@ -28,6 +28,7 @@ fn create_instance() -> Arc<Instance> {
     
     use vulkano::instance::InstanceExtensions;
 
+    //  create an instance
     Instance::new( None, &InstanceExtensions::none(), None )
         .expect("failed to create instance")
 }
@@ -35,20 +36,21 @@ fn create_instance() -> Arc<Instance> {
 //  create device
 fn create_device( instance: &Arc<Instance> ) -> ( Arc<Device>, Arc<Queue> ) {
 
-    //  retrieve physical device handle
     use vulkano::instance::PhysicalDevice;
 
     //  force to use the first GPU
     let gpu_idx: usize = 0;
 
+    //  retrieve physical device list
     let physical_device = PhysicalDevice::from_index( &instance, gpu_idx )
         .expect("out-of-range GPU index");
 
     //  query queue families on this physical device
-    for family in physical_device.queue_families() {
-        println!("Found a queue family with {:?} queue(s)", family.queues_count());
-    }
+    // for family in physical_device.queue_families() {
+    //     println!("Found a queue family with {:?} queue(s)", family.queues_count());
+    // }
 
+    //  retrieve set of queue families that support neccesary features 
     let queue_family = physical_device.queue_families()
         .find(|&q| q.supports_graphics())
         .expect("couldn't find a graphical queue family");
@@ -57,6 +59,7 @@ fn create_device( instance: &Arc<Instance> ) -> ( Arc<Device>, Arc<Queue> ) {
     use vulkano::device::DeviceExtensions;
     use vulkano::device::Features;
 
+    //  create a device coupled with queue handle
     let (device, mut queues) = {
         Device::new(physical_device, &Features::none(), &DeviceExtensions::none(),
                     [(queue_family, 0.5)].iter().cloned()).expect("failed to create device")
