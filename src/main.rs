@@ -62,7 +62,7 @@ fn render_image() {
     let mut writer = encoder.write_header().unwrap();
 
     //  determine image boundaries
-    let llPos = glm::vec3( -2.0f32, -1.0f32, -1.0f32 );
+    let ll_pos = glm::vec3( -2.0f32, -1.0f32, -1.0f32 );
     let horizontal = glm::vec3( 4.0f32, 0.0f32, 0.0f32 );
     let vertical = glm::vec3( 0.0f32, 2.0f32, 0.0f32 );
     let origin = glm::vec3( 0.0f32, 0.0f32, 0.0f32 );
@@ -73,7 +73,7 @@ fn render_image() {
         for i in 0..nx {
             let u = i as f32 / nx as f32;
             let v = j as f32 / ny as f32;
-            let r = Ray::new( origin.clone(), llPos + horizontal * u + vertical * v );
+            let r = Ray::new( origin.clone(), ll_pos + horizontal * u + vertical * v );
             let c = color( &r );
             let ir = ( 255.99f32 * c.x ) as u8;
             let ig = ( 255.99f32 * c.y ) as u8;
@@ -100,4 +100,3 @@ fn main() {
     //  render image
     render_image();
 }
- 

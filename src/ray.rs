@@ -13,6 +13,8 @@ extern crate glm;
 //  ALIASES
 ////////////////////////////////////////
 
+use std::clone::Clone;
+
 use glm::Vec3;
 
 ////////////////////////////////////////
@@ -24,7 +26,6 @@ use glm::Vec3;
 //  STRUCTS DECLARATION
 ////////////////////////////////////////
 
-#[ derive( Clone ) ]
 pub struct Ray {
     org: Vec3,
     dst: Vec3,
@@ -51,5 +52,12 @@ impl Ray {
     //  calculate unit vector of ray's direction
     pub fn direction( &self ) -> Vec3 {
         self.dst / glm::length( self.dst )
+    }
+}
+
+//  implement custom clone ability
+impl Clone for Ray {
+    fn clone( &self ) -> Ray {
+        Ray{ org: self.org.clone(), dst: self.dst.clone() }
     }
 }
