@@ -42,6 +42,12 @@ impl Ray {
         Ray{ org: o, dst: d }
     }
 
+    //  element getter
+    #[inline(always)]
+    pub fn origin( &self ) -> Vec3 { self.org.clone() }
+    #[inline(always)]
+    pub fn destination( &self ) -> Vec3 { self.dst.clone() }
+
     //  calculate position along the ray related to time
     pub fn point_at_param( &self, t: f32 ) -> Vec3 {
         glm::vec3( self.org.x + t * self.dst.x,
