@@ -10,26 +10,28 @@ extern crate png;
 ////////////////////////////////////////
 
 mod vk;
+mod ray;
 
 ////////////////////////////////////////
 //  ALIASES
 ////////////////////////////////////////
 
-use glm::Vector3;
+use glm::Vec3;
+use ray::Ray;
 
 ////////////////////////////////////////
 //  GLOBAL DECLARATIONS
 ////////////////////////////////////////
 
-type fvec3 = Vector3<f32>;
+//  calculate color at which the ray hit
+fn color( r: &Ray ) -> Vec3 {
 
-struct Ray {
-    org: fvec3,
-    dst: fvec3,
-}
+    //  calculate t
+    let dir: Vec3 = r.direction();
+    let t = 0.5f32 * ( dir.y + 1.0f32 );
 
-fn point_at_param( r: &Ray, t: f32 ) -> fvec3 {
-    r.org + glm::vec3( t, t, t ) * r.dst
+    //  return color
+    glm::vec3( 1.0f32, 1.0f32, 1.0f32 ) * ( 1.0f32 - t ) +  glm::vec3( 0.5f32, 0.7f32, 1.0f32 ) * t
 }
 
 //  render image function
@@ -59,16 +61,23 @@ fn render_image() {
     encoder.set(png::ColorType::RGBA).set(png::BitDepth::Eight);
     let mut writer = encoder.write_header().unwrap();
 
+    //  determine image boundaries
+    let llPos = glm::vec3( -2.0f32, -1.0f32, -1.0f32 );
+    let horizontal = glm::vec3( 4.0f32, 0.0f32, 0.0f32 );
+    let vertical = glm::vec3( 0.0f32, 2.0f32, 0.0f32 );
+    let origin = glm::vec3( 0.0f32, 0.0f32, 0.0f32 );
+
     //  construct data array containing a RGBA sequence.
     let mut data_vec = Vec::new();
     for j in (0..ny).rev() {
         for i in 0..nx {
-            let r: f32 = i as f32 / nx as f32;
-            let g: f32 = j as f32 / ny as f32;
-            let b: f32 = 0.2;
-            let ir: u8 = ( 255.99 * r ) as u8;
-            let ig: u8 = ( 255.99 * g ) as u8;
-            let ib: u8 = ( 255.99 * b ) as u8;
+            let u = i as f32 / nx as f32;
+            let v = j as f32 / ny as f32;
+            let r = Ray::new( origin.clone(), llPos + horizontal * u + vertical * v );
+            let c = color( &r );
+            let ir = ( 255.99f32 * c.x ) as u8;
+            let ig = ( 255.99f32 * c.y ) as u8;
+            let ib = ( 255.99f32 * c.z ) as u8;
 
             data_vec.extend( [ ir, ig, ib, 255 ].iter().clone() )
         }
@@ -90,6 +99,5 @@ fn main() {
 
     //  render image
     render_image();
-
 }
  
