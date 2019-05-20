@@ -2,8 +2,6 @@
 //  CRATES
 ////////////////////////////////////////
 
-extern crate glm;
-extern crate png;
 
 ////////////////////////////////////////
 //  MODULES
@@ -11,40 +9,62 @@ extern crate png;
 
 mod vk;
 mod ray;
+mod shape;
 
 ////////////////////////////////////////
 //  ALIASES
 ////////////////////////////////////////
 
 use glm::Vec3;
+
 use ray::Ray;
+
+use shape::{ HitRecord, Hitable };
+use shape::sphere::Sphere;
 
 ////////////////////////////////////////
 //  GLOBAL DECLARATIONS
 ////////////////////////////////////////
 
-//  check if the ray hit the sphere
-fn hit_sphere( center: &Vec3, radius: f32, r: &Ray ) -> bool {
+//  output image file name
+static OUT_FILE_NAME: &str = "out_image.png";
 
-    //  calculate discriminant
-    let oc = r.origin() - center.clone();
-    let a = glm::dot( r.destination(), r.destination() );
-    let b = 2.0f32 * glm::dot( oc, r.destination() );
-    let c = glm::dot( oc, oc ) - radius * radius;
-    let discriminant = b * b - 4.0f32 * a * c;
+//  check if this ray hit something
+fn hit_anything( r: &Ray, shape_list: &Vec<Box<Hitable>>, 
+                t_min: f32, t_max: f32, 
+                hit_rec: &mut HitRecord ) -> bool {
+    
+    //  loop all shapes and check if this ray hit something
+    let mut hit_any = false;
+    let mut closest_so_far = t_max;
+    for shape in shape_list {
+        if shape.hit( &r, t_min, closest_so_far, hit_rec ) {
+            hit_any = true;
 
-    //  if discriminant is above zero (2 roots), it definitly hits the sphere.
-    discriminant > 0.0f32
+            //  get the closest hit
+            closest_so_far = hit_rec.t;
+        }
+    }
+
+    hit_any
 }
 
 //  calculate color at which the ray hit
-fn color( r: &Ray ) -> Vec3 {
+fn color( r: &Ray, shape_list: &Vec<Box<Hitable>> ) -> Vec3 {
 
-    //  check if this ray hit the sphere
-    if hit_sphere( &glm::vec3( 0.0f32, 0.0f32, -1.0f32 ), 0.5, &r ) {
-        return glm::vec3( 1.0f32, 0.0f32, 0.0f32 )
+    //  construct blank hit record
+    let mut hit_record = HitRecord{ 
+        t: 0.0f32, 
+        p: glm::vec3( 0.0f32, 0.0f32, 0.0f32 ), 
+        n: glm::vec3( 0.0f32, 0.0f32, 0.0f32 ) 
+    }; 
+
+    //  check if this ray hit some spheres
+    if hit_anything( &r, &shape_list, 0.0f32, 1e37f32, &mut hit_record ) {
+        return ( hit_record.n + 1.0f32 ) * 0.5f32;
     }
 
+    //  if we reach this state, that means it hits nothing
     //  calculate t
     let dir: Vec3 = r.direction();
     let t = 0.5f32 * ( dir.y + 1.0f32 );
@@ -69,9 +89,7 @@ fn render_image() {
     use png::HasParameters;
 
     //  create image file
-    let path = Path::new("out_image.png");
-    // let display = path.display();
-    // println!("{}", display);
+    let path = Path::new( OUT_FILE_NAME );
     let file = File::create(path).unwrap();
     let ref mut w = BufWriter::new(file);
 
@@ -86,6 +104,11 @@ fn render_image() {
     let vertical = glm::vec3( 0.0f32, 2.0f32, 0.0f32 );
     let origin = glm::vec3( 0.0f32, 0.0f32, 0.0f32 );
 
+    //  construct shape list
+    let mut shape_list = Vec::new();
+    shape_list.push( Box::new( Sphere::new( glm::vec3( 0.0f32, 0.0f32, -1.0f32 ), 0.5f32 ) ) as Box<Hitable> );
+    shape_list.push( Box::new( Sphere::new( glm::vec3( 0.0f32, -100.5f32, -1.0f32 ), 100.0f32 ) ) as Box<Hitable> );
+
     //  construct data array containing a RGBA sequence.
     let mut data_vec = Vec::new();
     for j in (0..ny).rev() {
@@ -93,12 +116,12 @@ fn render_image() {
             let u = i as f32 / nx as f32;
             let v = j as f32 / ny as f32;
             let r = Ray::new( origin.clone(), ll_pos + horizontal * u + vertical * v );
-            let c = color( &r );
+            let c = color( &r, &shape_list );
             let ir = ( 255.99f32 * c.x ) as u8;
             let ig = ( 255.99f32 * c.y ) as u8;
             let ib = ( 255.99f32 * c.z ) as u8;
 
-            data_vec.extend( [ ir, ig, ib, 255 ].iter().clone() )
+            data_vec.extend( [ ir, ig, ib, 255 ].iter().clone() );
         }
     }
 
