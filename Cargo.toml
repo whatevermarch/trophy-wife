@@ -6,7 +6,5 @@ edition = "2018"
 
 [dependencies]
 vulkano = "0.11.1"
-winit = "0.19.1"
-vulkano-win = "0.11.1"
 glm = "0.2.3"
 png = "0.14.1"

@@ -2,7 +2,6 @@
 //  CRATES
 ////////////////////////////////////////
 
-extern crate vulkano;
 
 ////////////////////////////////////////
 //  MODULES
@@ -87,6 +86,7 @@ pub struct VkCore {
 ////////////////////////////////////////
 
 impl VkCore {
+    
     //  construct vulkan core
     pub fn new() -> VkCore {
         let instance = create_instance();
