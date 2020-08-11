@@ -12,7 +12,7 @@
 //  ALIASES
 ////////////////////////////////////////
 
-use std::clone::Clone;
+//use std::clone::Clone;
 
 use glm::Vec3;
 
@@ -25,6 +25,7 @@ use glm::Vec3;
 //  STRUCTS DECLARATION
 ////////////////////////////////////////
 
+#[derive(Clone)]
 pub struct Ray {
     org: Vec3,
     dst: Vec3,
@@ -61,8 +62,8 @@ impl Ray {
 }
 
 //  implement custom clone ability
-impl Clone for Ray {
-    fn clone( &self ) -> Ray {
-        Ray{ org: self.org.clone(), dst: self.dst.clone() }
-    }
-}
+// impl Clone for Ray {
+//     fn clone( &self ) -> Ray {
+//         Ray{ org: self.org.clone(), dst: self.dst.clone() }
+//     }
+// }

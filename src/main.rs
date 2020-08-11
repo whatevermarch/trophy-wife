@@ -7,20 +7,24 @@
 //  MODULES
 ////////////////////////////////////////
 
-mod vk;
+// mod vk;
 mod ray;
 mod shape;
+mod camera;
 
 ////////////////////////////////////////
 //  ALIASES
 ////////////////////////////////////////
 
 use glm::Vec3;
+use rand::Rng;
 
 use ray::Ray;
 
 use shape::{ HitRecord, Hitable };
 use shape::sphere::Sphere;
+
+use camera::Camera;
 
 ////////////////////////////////////////
 //  GLOBAL DECLARATIONS
@@ -76,7 +80,7 @@ fn color<T>( r: &Ray, shape_list: &Vec<T> ) -> Vec3
 }
 
 //  render image function
-fn render_image( w: u16, h: u16 ) 
+fn render_image( w: u16, h: u16, num_samples: u16 ) 
 {
     //  determine image size
     let nx = w;
@@ -100,29 +104,47 @@ fn render_image( w: u16, h: u16 )
     encoder.set(png::ColorType::RGBA).set(png::BitDepth::Eight);
     let mut writer = encoder.write_header().unwrap();
 
-    //  determine image boundaries
-    let ll_pos = glm::vec3( -2.0f32, -1.0f32, -1.0f32 );
-    let horizontal = glm::vec3( 4.0f32, 0.0f32, 0.0f32 );
-    let vertical = glm::vec3( 0.0f32, 2.0f32, 0.0f32 );
-    let origin = glm::vec3( 0.0f32, 0.0f32, 0.0f32 );
+    // //  determine image boundaries
+    // let ll_pos = glm::vec3( -2.0f32, -1.0f32, -1.0f32 );
+    // let horizontal = glm::vec3( 4.0f32, 0.0f32, 0.0f32 );
+    // let vertical = glm::vec3( 0.0f32, 2.0f32, 0.0f32 );
+    // let origin = glm::vec3( 0.0f32, 0.0f32, 0.0f32 );
 
     //  construct shape list
     let mut sphere_list = Vec::new();
     sphere_list.push( Sphere::new( glm::vec3( 0.0f32, 0.0f32, -1.0f32 ), 0.5f32 ) );
     sphere_list.push( Sphere::new( glm::vec3( 0.0f32, -100.5f32, -1.0f32 ), 100.0f32 ) );
 
+    //  construct camera
+    let cam = Camera::new();
+
+    //  initialize random number generator
+    let mut rng = rand::thread_rng();
+
     //  construct data array containing a RGBA sequence.
     let mut data_vec = Vec::new();
-    for j in (0..ny).rev() {
-        for i in 0..nx {
-            let u = i as f32 / nx as f32;
-            let v = j as f32 / ny as f32;
-            let r = Ray::new( origin.clone(), ll_pos + horizontal * u + vertical * v );
-            let c = color( &r, &sphere_list );
+    for j in (0..ny).rev() 
+    {
+        for i in 0..nx 
+        {
+            //  evaluate color fetched from rays
+            let mut c = glm::vec3( 0.0f32, 0.0f32, 0.0f32 );
+            for _ in 0..num_samples 
+            {
+                let u = ( i as f32 + rng.gen::<f32>() ) / nx as f32;
+                let v = ( j as f32 + rng.gen::<f32>() ) / ny as f32;
+                let r = cam.get_ray( u, v );
+                //let p = r.point_at_param( 2.0f32 );
+                c = c + color( &r, &sphere_list );
+            }
+            c = c / num_samples as f32;
+
+            //  encode color
             let ir = ( 255.99f32 * c.x ) as u8;
             let ig = ( 255.99f32 * c.y ) as u8;
             let ib = ( 255.99f32 * c.z ) as u8;
 
+            //  record the result color
             data_vec.extend( [ ir, ig, ib, 255 ].iter().clone() );
         }
     }
@@ -142,5 +164,5 @@ fn main()
     // let vk_core = VkCore::new();
 
     //  render image
-    render_image( 200, 100 );
+    render_image( 200, 100, 100 );
 }
