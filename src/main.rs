@@ -30,10 +30,11 @@ use shape::sphere::Sphere;
 static OUT_FILE_NAME: &str = "out_image.png";
 
 //  check if this ray hit something
-fn hit_anything( r: &Ray, shape_list: &Vec<Box<Hitable>>, 
+fn hit_anything<T>( r: &Ray, shape_list: &Vec<T>, 
                 t_min: f32, t_max: f32, 
-                hit_rec: &mut HitRecord ) -> bool {
-    
+                hit_rec: &mut HitRecord ) -> bool 
+    where T: Hitable
+{
     //  loop all shapes and check if this ray hit something
     let mut hit_any = false;
     let mut closest_so_far = t_max;
@@ -50,8 +51,9 @@ fn hit_anything( r: &Ray, shape_list: &Vec<Box<Hitable>>,
 }
 
 //  calculate color at which the ray hit
-fn color( r: &Ray, shape_list: &Vec<Box<Hitable>> ) -> Vec3 {
-
+fn color<T>( r: &Ray, shape_list: &Vec<T> ) -> Vec3 
+    where T: Hitable
+{
     //  construct blank hit record
     let mut hit_record = HitRecord{ 
         t: 0.0f32, 
@@ -74,11 +76,11 @@ fn color( r: &Ray, shape_list: &Vec<Box<Hitable>> ) -> Vec3 {
 }
 
 //  render image function
-fn render_image() {
-
+fn render_image( w: u16, h: u16 ) 
+{
     //  determine image size
-    let nx = 200;
-    let ny = 100;
+    let nx = w;
+    let ny = h;
 
     //  local aliases for reading and opening files
     use std::path::Path;
@@ -94,7 +96,7 @@ fn render_image() {
     let ref mut w = BufWriter::new(file);
 
     //  setup image
-    let mut encoder = png::Encoder::new(w, nx, ny); // Width is 2 pixels and height is 1.
+    let mut encoder = png::Encoder::new(w, nx as u32, ny as u32); // Width is 2 pixels and height is 1.
     encoder.set(png::ColorType::RGBA).set(png::BitDepth::Eight);
     let mut writer = encoder.write_header().unwrap();
 
@@ -105,9 +107,9 @@ fn render_image() {
     let origin = glm::vec3( 0.0f32, 0.0f32, 0.0f32 );
 
     //  construct shape list
-    let mut shape_list = Vec::new();
-    shape_list.push( Box::new( Sphere::new( glm::vec3( 0.0f32, 0.0f32, -1.0f32 ), 0.5f32 ) ) as Box<Hitable> );
-    shape_list.push( Box::new( Sphere::new( glm::vec3( 0.0f32, -100.5f32, -1.0f32 ), 100.0f32 ) ) as Box<Hitable> );
+    let mut sphere_list = Vec::new();
+    sphere_list.push( Sphere::new( glm::vec3( 0.0f32, 0.0f32, -1.0f32 ), 0.5f32 ) );
+    sphere_list.push( Sphere::new( glm::vec3( 0.0f32, -100.5f32, -1.0f32 ), 100.0f32 ) );
 
     //  construct data array containing a RGBA sequence.
     let mut data_vec = Vec::new();
@@ -116,7 +118,7 @@ fn render_image() {
             let u = i as f32 / nx as f32;
             let v = j as f32 / ny as f32;
             let r = Ray::new( origin.clone(), ll_pos + horizontal * u + vertical * v );
-            let c = color( &r, &shape_list );
+            let c = color( &r, &sphere_list );
             let ir = ( 255.99f32 * c.x ) as u8;
             let ig = ( 255.99f32 * c.y ) as u8;
             let ib = ( 255.99f32 * c.z ) as u8;
@@ -133,12 +135,12 @@ fn render_image() {
 //  MAIN FUNCTION
 ////////////////////////////////////////
 
-fn main() {
-
+fn main() 
+{
     //  initialize vulkan core
     // use vk::core::VkCore;
     // let vk_core = VkCore::new();
 
     //  render image
-    render_image();
+    render_image( 200, 100 );
 }
