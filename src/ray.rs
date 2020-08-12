@@ -12,8 +12,6 @@
 //  ALIASES
 ////////////////////////////////////////
 
-//use std::clone::Clone;
-
 use glm::Vec3;
 
 ////////////////////////////////////////
@@ -60,10 +58,3 @@ impl Ray {
         self.dst / glm::length( self.dst )
     }
 }
-
-//  implement custom clone ability
-// impl Clone for Ray {
-//     fn clone( &self ) -> Ray {
-//         Ray{ org: self.org.clone(), dst: self.dst.clone() }
-//     }
-// }
