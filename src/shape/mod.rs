@@ -14,10 +14,8 @@ pub mod sphere;
 ////////////////////////////////////////
 
 use glm::Vec3;
-use glm::builtin::sqrt;
 
 use crate::ray::Ray;
-use sphere::Sphere;
 
 ////////////////////////////////////////
 //  GLOBAL FUNCTIONS
@@ -28,6 +26,11 @@ use sphere::Sphere;
 //  STRUCTS DECLARATION
 ////////////////////////////////////////
 
+pub struct ShapeCollection<'a> {
+    list: &'a Vec<Box<dyn Hitable>>,
+}
+
+#[derive(Clone)]
 pub struct HitRecord {
     pub t: f32,
     pub p: Vec3,
@@ -44,41 +47,48 @@ pub trait Hitable {
 //  STRUCTS IMPLEMENTATION
 ////////////////////////////////////////
 
-impl Hitable for Sphere {
+impl<'a> ShapeCollection<'a>
+{
+    //  default constructor
+    pub fn new( shape_list: &Vec<Box<dyn Hitable>> ) -> ShapeCollection 
+    {
+        ShapeCollection{ list: shape_list }
+    }
+}
 
-    //  check if the ray hit the sphere
+impl<'a> Hitable for ShapeCollection<'a>
+{
+    //  check if the ray hit something in the collection
     fn hit( &self, ray: &Ray, 
-            t_min: f32, t_max: f32, 
-            hit_rec: &mut HitRecord ) -> bool {
+        t_min: f32, t_max: f32, 
+        hit_rec: &mut HitRecord ) -> bool 
+    {
+        let mut hit_anything = false;
+        let mut closest_so_far = t_max;
 
-        //  calculate discriminant
-        let oc = ray.origin() - self.center();
-        let a = glm::dot( ray.destination(), ray.destination() );
-        let b = 2.0f32 * glm::dot( oc, ray.destination() );
-        let c = glm::dot( oc, oc ) - self.radius() * self.radius();
-        let discriminant = b * b - 4.0f32 * a * c;
-
-        //  if discriminant is above zero (2 roots), it definitly hits the sphere.
-        if discriminant > 0.0f32 {
-            //  calculate first hit on sphere
-            let t1 = ( -b - sqrt( discriminant ) ) / ( 2.0f32 * a );
-            if t1 <= t_max && t1 >= t_min {
-                hit_rec.t = t1;
-                hit_rec.p = ray.point_at_param( hit_rec.t );
-                hit_rec.n = ( hit_rec.p - self.center() ) / self.radius();
-                return true;
-            }
-            //  calculate second hit on sphere
-            let t2 = ( -b + sqrt( discriminant ) ) / ( 2.0f32 * a );
-            if t2 <= t_max && t2 >= t_min {
-                hit_rec.t = t2;
-                hit_rec.p = ray.point_at_param( hit_rec.t );
-                hit_rec.n = ( hit_rec.p - self.center() ) / self.radius();
-                return true;
+        for shape in self.list.iter()
+        {
+            if (*shape).hit( ray, t_min, closest_so_far, hit_rec )
+            {
+                hit_anything = true;
+                closest_so_far = hit_rec.t;
             }
         }
 
-        //  else, it definitly hits no sphere.
-        false
+        hit_anything
+    }
+}
+
+impl HitRecord
+{
+    //  default constructor
+    pub fn new() -> HitRecord 
+    {
+        HitRecord
+        { 
+            t: 0.0f32, 
+            p: glm::vec3( 0.0f32, 0.0f32, 0.0f32 ), 
+            n: glm::vec3( 0.0f32, 0.0f32, 0.0f32 ) 
+        }
     }
 }
